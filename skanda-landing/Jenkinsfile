@@ -1,5 +1,5 @@
 pipeline {
-    agent { docker { image 'node:18-alpine' } }
+    agent any   // use host node with Docker installed
 
     environment {
         DOCKERHUB_USER = 'chaithu33'
@@ -7,15 +7,9 @@ pipeline {
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                git 'https://github.com/chaithanya-paturu3/pipelines'
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .'
+                sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest skanda-landing/'
             }
         }
 
@@ -42,12 +36,8 @@ pipeline {
     }
 
     post {
-        success {
-            echo '🎉 Skanda Landing Page deployed successfully!'
-        }
-        failure {
-            echo '❌ Deployment failed!'
-        }
+        success { echo '🎉 Skanda Landing Page deployed successfully!' }
+        failure { echo '❌ Deployment failed!' }
     }
 }
 
