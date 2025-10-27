@@ -1,0 +1,53 @@
+pipeline {
+    agent { docker { image 'node:18-alpine' } }
+
+    environment {
+        DOCKERHUB_USER = 'chaithu33'
+        IMAGE_NAME = 'skanda-apartments'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/chaithanya-paturu3/pipelines'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .'
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub-pass', variable: 'DOCKERHUB_PASS')]) {
+                    sh '''
+                        echo $DOCKERHUB_PASS | docker login -u $DOCKERHUB_USER --password-stdin
+                        docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                    docker stop skanda || true
+                    docker rm skanda || true
+                    docker run -d -p 8081:80 --name skanda $DOCKERHUB_USER/$IMAGE_NAME:latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Skanda Landing Page deployed successfully!'
+        }
+        failure {
+            echo '❌ Deployment failed!'
+        }
+    }
+}
+
